@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/facebook/luaffifb.svg?branch=master)](https://travis-ci.org/facebook/luaffifb)
 
+**This is an edited copy of fork from https://github.com/facebook/luaffifb**
+
 About
 -----
 This is a library for calling C function and manipulating C types from lua. It
