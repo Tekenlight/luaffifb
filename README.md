@@ -1,4 +1,4 @@
-**This is an edited copy of fork from https://github.com/facebook/luaffifb**
+**This is an maintained copy of fork from https://github.com/facebook/luaffifb**
 
 About
 -----
