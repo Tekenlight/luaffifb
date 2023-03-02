@@ -4,7 +4,7 @@ About
 -----
 This is a library for calling C function and manipulating C types from lua. It
 is designed to be interface compatible with the FFI library in LuaJIT (see
-http://luajit.org/ext\_ffi.html). It can parse C function declarations and
+http://luajit.org/ext_ffi.html). It can parse C function declarations and
 struct definitions that have been directly copied out of C header files and
 into lua source as a string.
 
