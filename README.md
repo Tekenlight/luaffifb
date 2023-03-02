@@ -36,7 +36,7 @@ luarocks make
 
 Documentation
 -------------
-This library is designed to be source compatible with LuaJIT's FFI extension. The documentation at http://luajit.org/ext\_ffi.html describes the API and semantics.
+This library is designed to be source compatible with LuaJIT's FFI extension. The documentation at http://luajit.org/ext_ffi.html describes the API and semantics.
 
 Pointer Comparison
 ------------
