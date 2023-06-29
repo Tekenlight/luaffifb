@@ -907,7 +907,7 @@ local tp = ffi.metatype("struct newtest",
 )
 if _VERSION ~= 'Lua 5.1' then
     local v = tp(1, 2, 3)
-    x, y = pairs(v)
+    local x, y = pairs(v)
     assert(x == 1 and y == 2)
     x, y = ipairs(v)
     assert(x == 2 and y == 3)
