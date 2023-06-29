@@ -2280,6 +2280,7 @@ static int call_user_binop(lua_State* L, const char* opfield, int lidx, int lusr
     return -1;
 }
 
+/*
 static int cdata_concat(lua_State* L)
 {
     struct ctype lt, rt;
@@ -2295,6 +2296,33 @@ static int cdata_concat(lua_State* L)
     }
 
     return luaL_error(L, "NYI");
+}
+*/
+
+static int cdata_concat(lua_State* L)
+{
+    size_t l_size = 0, r_size = 0;
+    const char * l_str = NULL;
+    const char * r_str = NULL;
+    char * o_str = NULL;
+
+    lua_settop(L, 2);
+
+    r_str = luaL_tolstring(L, 2, &r_size);
+    if (!r_str) return luaL_error(L, "NYI");
+    l_str = luaL_tolstring(L, 1, &l_size);
+    if (!l_str) return luaL_error(L, "NYI");
+
+    o_str = malloc(l_size + r_size);
+
+    memcpy(o_str, l_str, l_size);
+    memcpy((o_str+l_size), r_str, r_size);
+
+    lua_pushlstring(L, o_str, l_size + r_size);
+
+    free(o_str);
+
+    return 1;
 }
 
 static int cdata_len(lua_State* L)
@@ -2811,17 +2839,34 @@ static int cdata_tostring(lua_State* L)
         lua_pushfstring(L, "%p", *(uintptr_t*) p);
         return 1;
 
+    case INT8_TYPE:
+        sprintf(buf, ct.is_unsigned ? "%hhu" : "%hhd", *(uint8_t*) p);
+        lua_pushstring(L, buf);
+        return 1;
+
+    case INT16_TYPE:
+        sprintf(buf, ct.is_unsigned ? "%hu" : "%hd", *(uint8_t*) p);
+        lua_pushstring(L, buf);
+        return 1;
+
+    case INT32_TYPE:
+        sprintf(buf, ct.is_unsigned ? "%u" : "%d", *(uint8_t*) p);
+        lua_pushstring(L, buf);
+        return 1;
+
     case INT64_TYPE:
         sprintf(buf, ct.is_unsigned ? "%"PRIu64 : "%"PRId64, *(uint64_t*) p);
         lua_pushstring(L, buf);
         return 1;
 
     case FLOAT_TYPE:
+        printf("%s:%d\n", __FILE__, __LINE__);
         sprintf(buf,"%f", *(float*) p);
         lua_pushstring(L, buf);
         return 1;
 
     default:
+        printf("%s:%d\n", __FILE__, __LINE__);
         sprintf(buf, ct.is_unsigned ? "%"PRId64 : "%"PRId64, (int64_t) check_intptr(L, 1, p, &ct));
         lua_pushstring(L, buf);
         return 1;
