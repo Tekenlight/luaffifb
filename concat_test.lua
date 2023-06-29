@@ -10,8 +10,8 @@ assert(b .. s .. i .. l .. a == '1234hello ');
 assert(b .. s .. a .. i .. l == '12hello 34');
 
 local bb = ffi.new("_Bool", true);
-assert(bb .. b .. s .. a .. i .. l, 'true12hello 34');
-assert(b .. s .. a .. i .. l .. bb, '12hello 34true')
-assert(b .. s .. a .. bb .. i .. l, '12hello true34');
+assert(bb .. b .. s .. a .. i .. l == 'true12hello 34');
+assert(b .. s .. a .. i .. l .. bb == '12hello 34true')
+assert(b .. s .. a .. bb .. i .. l == '12hello true34');
 
 print("concat_test PASSED");
