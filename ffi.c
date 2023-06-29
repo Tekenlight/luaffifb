@@ -1071,7 +1071,6 @@ static void set_struct(lua_State* L, int idx, void* to, int to_usr, const struct
                 lua_pushinteger(L, i);
                 off = get_member(L, to_usr, tt, &mt);
                 assert(off >= 0);
-                printf("%s:%d off = [%td]\n", __FILE__, __LINE__, off);
                 set_value(L, -2, (char*) to + off, -1, &mt, check_pointers);
                 lua_pop(L, 1); /* mt usr */
             }
@@ -2860,13 +2859,11 @@ static int cdata_tostring(lua_State* L)
         return 1;
 
     case FLOAT_TYPE:
-        printf("%s:%d\n", __FILE__, __LINE__);
         sprintf(buf,"%f", *(float*) p);
         lua_pushstring(L, buf);
         return 1;
 
     default:
-        printf("%s:%d\n", __FILE__, __LINE__);
         sprintf(buf, ct.is_unsigned ? "%"PRId64 : "%"PRId64, (int64_t) check_intptr(L, 1, p, &ct));
         lua_pushstring(L, buf);
         return 1;
