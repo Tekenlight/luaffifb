@@ -2877,6 +2877,11 @@ static int cdata_tostring(lua_State* L)
         lua_pushstring(L, buf);
         return 1;
 
+    case DOUBLE_TYPE:
+        sprintf(buf,"%lf", *(double*) p);
+        lua_pushstring(L, buf);
+        return 1;
+
     default:
         sprintf(buf, ct.is_unsigned ? "%"PRId64 : "%"PRId64, (int64_t) check_intptr(L, 1, p, &ct));
         lua_pushstring(L, buf);
