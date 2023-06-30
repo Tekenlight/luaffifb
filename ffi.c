@@ -15,13 +15,6 @@
 #endif
 
 
-#include <execinfo.h>
-#define STACK_TRACE() {\
-    void* callstack[128+1]; \
-    int i, frames = backtrace(callstack, 128); \
-    backtrace_symbols_fd(callstack, frames, STDERR_FILENO); \
-}
-
 /* Set to 1 to get extra debugging on print */
 #define DEBUG_TOSTRING 0
 

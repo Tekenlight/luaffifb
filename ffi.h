@@ -19,6 +19,13 @@
 #include <string.h>
 #include <assert.h>
 
+#include <execinfo.h>
+#define STACK_TRACE() {\
+    void* callstack[128]; \
+    int i, frames = backtrace(callstack, 128); \
+    backtrace_symbols_fd(callstack, frames, STDERR_FILENO); \
+}
+
 #ifdef __cplusplus
 extern "C" {
 # include <lua.h>

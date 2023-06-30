@@ -10,12 +10,6 @@
 
 #include <unistd.h>
 
-#include <execinfo.h>
-#define STACK_TRACE() {\
-    void* callstack[128]; \
-    int i, frames = backtrace(callstack, 128); \
-    backtrace_symbols_fd(callstack, frames, STDERR_FILENO); \
-}
 static cfunction compile(Dst_DECL, lua_State* L, cfunction func, int ref);
 
 static void* reserve_code(struct jit* jit, lua_State* L, size_t sz);
