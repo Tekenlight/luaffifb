@@ -1,4 +1,4 @@
-package = "luaffi"
+package = "luaffi-tkl"
 version = "scm-1"
 
 source = {
