@@ -1418,6 +1418,45 @@ static int ctype_call(lua_State* L)
     return do_new(L, 0);
 }
 
+static int ctype_index(lua_State* L)
+{
+    void* to;
+    struct ctype ct;
+    char* data;
+    ptrdiff_t off;
+
+    lua_settop(L, 2);
+    check_ctype(L, 1, &ct);
+    assert(lua_gettop(L) == 3);
+
+    if (!push_user_mt(L, -1, &ct)) {
+        goto err;
+    }
+    lua_pushliteral(L, "__index");
+    lua_rawget(L, -2);
+
+    if (lua_isnil(L, -1)) {
+        goto err;
+    }
+
+    if (lua_istable(L, -1)) {
+        lua_pushvalue(L, 2);
+        lua_rawget(L, -2);
+        if (lua_isnil(L, -1))
+            goto err;
+        return 1;
+    }
+
+    lua_insert(L, 1);
+    lua_settop(L, 3);
+    lua_call(L, 2, LUA_MULTRET);
+    return lua_gettop(L);
+
+err:
+    push_type_name(L, 3, &ct);
+    return luaL_error(L, "type %s has no member %s", lua_tostring(L, -1), lua_tostring(L, 2));
+}
+
 static int ffi_sizeof(lua_State* L)
 {
     struct ctype ct;
@@ -1699,6 +1738,14 @@ static int ffi_metatype(lua_State* L)
     }
 
     lua_pushlightuserdata(L, &user_mt_key);
+    lua_rawget(L, 3);
+    if (!lua_isnil(L, -1)) {
+        push_type_name(L, 3, &ct);
+        return luaL_error(L, "type %s already has a user metatable", lua_tostring(L, -1));
+    }
+    lua_pop(L, 1);
+
+    lua_pushlightuserdata(L, &user_mt_key);
     lua_pushvalue(L, 2);
     lua_rawset(L, 3); /* user[user_mt_key] = mt */
 
@@ -1827,6 +1874,17 @@ static int cdata_newindex(lua_State* L)
             goto err;
         }
 
+        if (tt.const_mask & 0xFF) {
+            return luaL_error(L, "can't set const data");
+        }
+
+        if (lua_istable(L, -1)) {
+            lua_pushvalue(L, 2);
+            lua_pushvalue(L, 3);
+            lua_settable(L, -3);
+            return 1;
+        }
+
         lua_insert(L, 1);
         lua_settop(L, 4);
         lua_call(L, 3, LUA_MULTRET);
@@ -1903,6 +1961,8 @@ static int cdata_index(lua_State* L)
         if (lua_istable(L, -1)) {
             lua_pushvalue(L, 2);
             lua_gettable(L, -2);
+            if (lua_isnil(L, -1))
+                goto err;
             return 1;
         }
 
@@ -2735,7 +2795,7 @@ static const char* etype_tostring(int type)
 
 static void print_type(lua_State* L, const struct ctype* ct)
 {
-    lua_pushfstring(L, " sz %d %d %d align %d ptr %d %d %d type %s%s %d %d %d name %d call %d %d var %d %d %d bit %d %d %d %d jit %d",
+    lua_pushfstring(L, " sz %d %d %d align %d ptr %d %d const %d type %s%s %d %d %d name %d call %d %d var %d %d %d bit %d %d %d %d jit %d",
             /* sz */
             ct->base_size,
             ct->array_size,
@@ -2745,6 +2805,7 @@ static void print_type(lua_State* L, const struct ctype* ct)
             /* ptr */
             ct->is_array,
             ct->pointers,
+            /* const */
             ct->const_mask,
             /* type */
             ct->is_unsigned ? "u" : "",
@@ -3430,6 +3491,7 @@ static const luaL_Reg callback_mt[] = {
 static const luaL_Reg ctype_mt[] = {
     {"__call", &ctype_call},
     {"__new", &ctype_new},
+    {"__index", &ctype_index},
     {"__tostring", &ctype_tostring},
     {NULL, NULL}
 };
