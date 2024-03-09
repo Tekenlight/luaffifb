@@ -2,7 +2,7 @@ package = "luaffi-tkl"
 version = "scm-1"
 
 source = {
-   url = "git://github.com/Tekenlight/luaffifb.git",
+   url = "git+https://github.com/Tekenlight/luaffifb.git",
 }
 
 description = {
