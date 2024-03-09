@@ -1,5 +1,5 @@
 package = "luaffi-tkl"
-version = "1.0.0"
+version = "1.0.0-1"
 
 source = {
    url = "git+https://github.com/Tekenlight/luaffifb.git",
