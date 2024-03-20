@@ -2350,6 +2350,7 @@ static int user_cdata_concat(lua_State* L)
     return -1;
 }
 
+#if LUA_VERSION_NUM > 501
 static int stringified_cdata_concat(lua_State* L)
 {
     size_t l_size = 0, r_size = 0;
@@ -2375,6 +2376,7 @@ static int stringified_cdata_concat(lua_State* L)
 
     return 1;
 }
+#endif
 
 static int cdata_concat(lua_State* L)
 {
@@ -2383,7 +2385,11 @@ static int cdata_concat(lua_State* L)
         return ret;
     }
 
+#if LUA_VERSION_NUM > 501
     return stringified_cdata_concat(L);
+#else
+    return ret;
+#endif
 }
 
 static int cdata_len(lua_State* L)
