@@ -1,9 +1,9 @@
 package = "luaffi-tkl"
-version = "1.0.0-1"
+version = "1.0.0-2"
 
 source = {
    url = "git+https://github.com/Tekenlight/luaffifb.git",
-   tag = "v1.0.2"
+   tag = "v1.0.3"
 }
 
 description = {
