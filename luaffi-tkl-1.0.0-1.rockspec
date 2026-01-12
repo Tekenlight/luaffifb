@@ -31,5 +31,6 @@ build = {
       },
       ['ffi_test.libtest'] = 'test.c',
       ['ffi_test.test'] = 'test.lua',
+      ['ffi_test.detect_ffi'] = 'busted_ref/detect_ffi.lua',
    }
 }
