@@ -55,8 +55,16 @@ Known Issues
   the way metamethods are looked up with mixed types in Lua 5.1. If you need
 this upgrade to Lua 5.2 or use boxed numbers (uint64\_t and uintptr\_t).
 - All bitfields are treated as unsigned (does anyone even use signed
-  bitfields?). Note that "int s:8" is unsigned on unix x86/x64, but signed on
-windows.
+  bitfields?). Note that "int s:8" is unsigned on unix x86/x64, but signed on windows.
+- When the testing tool [busted](https://github.com/lunarmodules/busted) is run over
+  multiple Lua files, the testing tool detects only LuaJIT ffi and not this ffi.
+  When running with Lua5.2, 5.3 etc. it results in multiple free errors,
+  becuase LuaJIT support for Lua5.2 onwards is not present.
+  A helper script busted/detect\_ffi.lua has been provided in order to circumvent this.
+  It to be used, when using this ffi along with busted as below, to avoid these errors
+  ```
+  busted --helper=< path ... >/detect_ffi.lua --lua=lua5.3 test1.lua test2.lua
+  ```
 
 
 How it works
