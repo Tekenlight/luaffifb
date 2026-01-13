@@ -56,16 +56,6 @@ Known Issues
 this upgrade to Lua 5.2 or use boxed numbers (uint64\_t and uintptr\_t).
 - All bitfields are treated as unsigned (does anyone even use signed
   bitfields?). Note that "int s:8" is unsigned on unix x86/x64, but signed on windows.
-- When the testing tool [busted](https://github.com/lunarmodules/busted) is run over
-  multiple Lua files, the testing tool detects only LuaJIT ffi and not this ffi.
-  When running with Lua5.2, 5.3 etc. it results in multiple free errors,
-  becuase LuaJIT support for Lua5.2 onwards is not present.
-  A helper script busted/detect\_ffi.lua has been provided in order to circumvent this.
-  It to be used, when using this ffi along with busted as below, to avoid these errors
-  ```
-  busted --helper=< path ... >/detect_ffi.lua --lua=lua5.3 test1.lua test2.lua
-  ```
-
 
 How it works
 ------------
@@ -94,3 +84,17 @@ using dynasm (see call\_x86.dasc). The JITed code does the following in order:
 3. Performs the C call
 4. Retrieves `errno`
 5. Pushes the result back into lua from the HW register or stack
+
+  
+Usage with other lua frameworks
+-------------------------------
+This is not a comprehensive method that covers all other lua frameworks. It is more an
+assimilation of learnings gathered to make those frameworks with this implementation
+if lua ffi.
+
+1. **[busted](https://github.com/lunarmodules/busted)**: The testing tool detects only LuaJIT ffi and not this ffi. When running with Lua5.2, 5.3 etc. it results in multiple free errors if this implementation is used in the test cases (via require). [Ref](https://github.com/Tekenlight/luaffifb/issues/5).  A helper script busted\_ref/detect\_ffi.lua has been provided in order to circumvent this. This helper gets installed along with *luarocks install ...* in the path *<LUA_PATH ...>/busted/detect_ffi.lua*. This helper can be used along with *busted* while using this implementation of ffi, in the following manner.
+  
+```
+busted --helper=< path ... >/detect_ffi.lua --lua=lua5.3 test1.lua test2.lua
+```
+
