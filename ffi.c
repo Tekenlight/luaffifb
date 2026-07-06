@@ -2292,6 +2292,46 @@ static int cdata_unm(lua_State* L)
     return 1;
 }
 
+static int cdata_bnot(lua_State* L)
+{
+    struct ctype ct;
+    void* p;
+    int64_t val;
+    int ret;
+
+    lua_settop(L, 1);
+    p = to_cdata(L, 1, &ct);
+
+    ret = call_user_op(L, "__bnot", 1, 2, &ct);
+    if (ret >= 0) {
+        return ret;
+    }
+
+    val = check_intptr(L, 1, p, &ct);
+
+    if (ct.pointers) {
+        luaL_error(L, "can't negate a pointer value");
+    } else {
+        if (ct.is_unsigned) {
+            memset(&ct, 0, sizeof(ct));
+            ct.is_unsigned = 1;
+            ct.type = INT64_TYPE;
+            ct.base_size = 8;
+            ct.is_defined = 1;
+            push_number(L, ~val, 0, &ct);
+        }
+        else {
+            memset(&ct, 0, sizeof(ct));
+            ct.type = INT64_TYPE;
+            ct.base_size = 8;
+            ct.is_defined = 1;
+            push_number(L, ~val, 0, &ct);
+        }
+    }
+
+    return 1;
+}
+
 /* returns -ve if no binop was called otherwise returns the number of return
  * arguments */
 static int call_user_binop(lua_State* L, const char* opfield, int lidx, int lusr, const struct ctype* lt, int ridx, int rusr, const struct ctype* rt)
@@ -2637,6 +2677,9 @@ static int cdata_sub(lua_State* L)
                                                                             \
     return 1
 
+#define BOR(l,r,s) s = l | r
+#define BXOR(l,r,s) s = l ^ r
+#define BAND(l,r,s) s = l & r
 #define MUL(l,r,s) s = l * r
 #define DIV(l,r,s) s = l / r
 #define MOD(l,r,s) s = l % r
@@ -2654,6 +2697,15 @@ static int cdata_sub(lua_State* L)
 #define MODC(l,r,s) (void) l, (void) r, memset(&s, 0, sizeof(s)), luaL_error(L, "NYI: complex mod")
 #define POWC(l,r,s) (void) l, (void) r, memset(&s, 0, sizeof(s)), luaL_error(L, "NYI: complex pow")
 #endif
+
+static int cdata_bor(lua_State* L)
+{ NUMBER_ONLY_BINOP("__bor", BOR, MULC); }
+
+static int cdata_bxor(lua_State* L)
+{ NUMBER_ONLY_BINOP("__bxor", BXOR, MULC); }
+
+static int cdata_band(lua_State* L)
+{ NUMBER_ONLY_BINOP("__band", BAND, MULC); }
 
 static int cdata_mul(lua_State* L)
 { NUMBER_ONLY_BINOP("__mul", MUL, MULC); }
@@ -3478,6 +3530,10 @@ static const luaL_Reg cdata_mt[] = {
     {"__mod", &cdata_mod},
     {"__pow", &cdata_pow},
     {"__unm", &cdata_unm},
+    {"__bnot", &cdata_bnot},
+    {"__band", &cdata_band},
+    {"__bor", &cdata_bor},
+    {"__bxor", &cdata_bxor},
     {"__eq", &cdata_eq},
     {"__lt", &cdata_lt},
     {"__le", &cdata_le},
