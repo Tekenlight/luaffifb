@@ -34,6 +34,152 @@ int niluv_key;
 int asmname_key;
 
 static const char* etype_tostring(int type);
+
+/* lua hook ffi interface */
+#include "luaffi_capi.h"
+
+static struct ctype capi_int16_ct;
+static struct ctype capi_uint16_ct;
+static struct ctype capi_int32_ct;
+static struct ctype capi_uint32_ct;
+static struct ctype capi_int64_ct;
+static struct ctype capi_int64_ct;
+static struct ctype capi_uint64_ct;
+static struct ctype capi_float_ct;
+static struct ctype capi_null_ct;
+
+static void capi_push_int16(lua_State *L, int16_t value)
+{
+    int16_t *p;
+
+    p = (int16_t *) push_cdata(L, 0, &capi_int16_ct);
+
+    *p = value;
+}
+
+static void capi_push_uint16(lua_State *L, uint16_t value)
+{
+    uint16_t *p;
+
+    p = (uint16_t *) push_cdata(L, 0, &capi_uint16_ct);
+
+    *p = value;
+}
+
+static void capi_push_int32(lua_State *L, int32_t value)
+{
+    int32_t *p;
+
+    p = (int32_t *) push_cdata(L, 0, &capi_int32_ct);
+
+    *p = value;
+}
+
+static void capi_push_uint32(lua_State *L, uint32_t value)
+{
+    uint32_t *p;
+
+    p = (uint32_t *) push_cdata(L, 0, &capi_uint32_ct);
+
+    *p = value;
+}
+
+/*
+static void capi_push_int64(lua_State *L, int64_t value)
+{
+    int64_t *p;
+
+    p = (int64_t *) push_cdata(L, 0, &capi_int64_ct);
+
+    *p = value;
+}
+*/
+static void capi_push_int64(lua_State *L, int64_t value)
+{
+    int64_t *p;
+
+    /*
+    fprintf(
+        stderr,
+        "ENTER capi_push_int64: L=%p value=%lld ct=%p type=%u base_size=%zu\n",
+        (void *)L,
+        (long long)value,
+        (void *)&capi_int64_ct,
+        capi_int64_ct.type,
+        capi_int64_ct.base_size
+    );
+    */
+
+    p = (int64_t *)push_cdata(
+        L,
+        0,
+        &capi_int64_ct
+    );
+
+    /*
+    fprintf(
+        stderr,
+        "AFTER push_cdata: p=%p\n",
+        (void *)p
+    );
+    */
+
+    *p = value;
+
+    /*
+    fprintf(
+        stderr,
+        "AFTER assignment\n"
+    );
+    */
+}
+
+static void capi_push_uint64(lua_State *L, uint64_t value)
+{
+    uint64_t *p;
+
+    p = (uint64_t *) push_cdata(L, 0, &capi_uint64_ct);
+
+    *p = value;
+}
+
+static void capi_push_float(lua_State *L, float value)
+{
+    float *p;
+
+    p = (float *) push_cdata(L, 0, &capi_float_ct);
+
+    *p = value;
+}
+
+static void capi_push_null(lua_State *L)
+{
+    void **p;
+
+    p = (void**) push_cdata(L, 0, &capi_null_ct);
+
+    *p = NULL;
+}
+
+static const luaffi_capi_v1 luaffi_capi = {
+
+    .version = LUAFFI_CAPI_VERSION,
+    .size = sizeof(luaffi_capi_v1),
+
+    .push_int16 = capi_push_int16,
+    .push_uint16 = capi_push_uint16,
+    .push_int32 = capi_push_int32,
+    .push_uint32 = capi_push_uint32,
+    .push_int64 = capi_push_int64,
+    .push_uint64 = capi_push_uint64,
+    .push_float = capi_push_float,
+    .push_null = capi_push_null
+};
+
+
+/* lua hook ffi interface */
+
+
 static void debug_print_type(const struct ctype* ct)
 {
     printf(" sz %zu %zu %zu align %d ptr %d %d %d type %s%s %d %d %d name %d call %d %d var %d %d %d bit %d %d %d %d jit %d\n",
@@ -1454,6 +1600,7 @@ static int ctype_index(lua_State* L)
 
 err:
     push_type_name(L, 3, &ct);
+    //fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return luaL_error(L, "type %s has no member %s", lua_tostring(L, -1), lua_tostring(L, 2));
 }
 
@@ -1483,6 +1630,7 @@ static int ffi_alignof(lua_State* L)
     lua_pushvalue(L, 2);
     if (get_member(L, -2, &ct, &mt) < 0) {
         push_type_name(L, 3, &ct);
+        //fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         return luaL_error(L, "type %s has no member %s", lua_tostring(L, -1), lua_tostring(L, 2));
     }
 
@@ -1501,6 +1649,7 @@ static int ffi_offsetof(lua_State* L)
     off = get_member(L, -2, &ct, &mt); /* this replaces the member key at -1 with the mbr usr value */
     if (off < 0) {
         push_type_name(L, 3, &ct);
+        //fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         return luaL_error(L, "type %s has no member %s", lua_tostring(L, -1), lua_tostring(L, 2));
     }
 
@@ -1900,6 +2049,7 @@ static int cdata_newindex(lua_State* L)
 
 err:
     push_type_name(L, 4, &tt);
+    //fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
     return luaL_error(L, "type %s has no member %s", lua_tostring(L, -1), lua_tostring(L, 2));
 }
 
@@ -1973,6 +2123,7 @@ static int cdata_index(lua_State* L)
 
 err:
         push_type_name(L, 3, &ct);
+        //fprintf(stderr, "%s:%d\n", __FILE__, __LINE__);
         return luaL_error(L, "type %s has no member %s", lua_tostring(L, -1), lua_tostring(L, 2));
     }
 
@@ -3015,6 +3166,13 @@ static int ffi_getptr(lua_State* L)
 
 }
 
+static int ffi_get_capi(lua_State *L)
+{
+    lua_pushlightuserdata(L, (void *)&luaffi_capi);
+
+    return 1;
+}
+
 static int ffi_errno(lua_State* L)
 {
     struct jit* jit = get_jit(L);
@@ -3590,6 +3748,7 @@ static const luaL_Reg ffi_reg[] = {
     {"i64", &ffi_i64},
     {"u64", &ffi_u64},
     {"getptr", &ffi_getptr},
+    {"_capi", &ffi_get_capi},
     {NULL, NULL}
 };
 
@@ -3744,12 +3903,19 @@ static int setup_upvals(lua_State* L)
         push_builtin(L, &ct, "uint8_t", INT8_TYPE, sizeof(uint8_t), 0, 1);
         push_builtin(L, &ct, "int8_t", INT8_TYPE, sizeof(int8_t), 0, 0);
         push_builtin(L, &ct, "uint16_t", INT16_TYPE, sizeof(uint16_t), ALIGNOF(a16), 1);
+        memcpy(&capi_uint16_ct, &ct, sizeof(struct ctype));
         push_builtin(L, &ct, "int16_t", INT16_TYPE, sizeof(int16_t), ALIGNOF(a16), 0);
+        memcpy(&capi_int16_ct, &ct, sizeof(struct ctype));
         push_builtin(L, &ct, "uint32_t", INT32_TYPE, sizeof(uint32_t), ALIGNOF(a32), 1);
+        memcpy(&capi_uint32_ct, &ct, sizeof(struct ctype));
         push_builtin(L, &ct, "int32_t", INT32_TYPE, sizeof(int32_t), ALIGNOF(a32), 0);
+        memcpy(&capi_int32_ct, &ct, sizeof(struct ctype));
         push_builtin(L, &ct, "uint64_t", INT64_TYPE, sizeof(uint64_t), ALIGNOF(a64), 1);
+        memcpy(&capi_uint64_ct, &ct, sizeof(struct ctype));
         push_builtin(L, &ct, "int64_t", INT64_TYPE, sizeof(int64_t), ALIGNOF(a64), 0);
+        memcpy(&capi_int64_ct, &ct, sizeof(struct ctype));
         push_builtin(L, &ct, "float", FLOAT_TYPE, sizeof(float), ALIGNOF(af), 0);
+        memcpy(&capi_float_ct, &ct, sizeof(struct ctype));
         push_builtin(L, &ct, "double", DOUBLE_TYPE, sizeof(double), ALIGNOF(ad), 0);
 #ifdef HAVE_LONG_DOUBLE
         push_builtin(L, &ct, "long double", LONG_DOUBLE_TYPE, sizeof(long double), ALIGNOF(ald), 0);
@@ -3780,6 +3946,7 @@ static int setup_upvals(lua_State* L)
         lua_setfield(L, -2, "NULL");
 
         /* add ffi.NULL */
+        memcpy(&capi_null_ct, &ct, sizeof(struct ctype));
         push_cdata(L, 0, &ct);
         lua_setfield(L, 1, "NULL");
 
