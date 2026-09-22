@@ -1,4 +1,5 @@
-**This is a maintained copy of fork from https://github.com/facebook/luaffifb**
+**luaffi-tkl is a maintained fork of luaffifb with additional functionality
+for embedding and interoperability with native Lua applications.**
 
 About
 -----
@@ -29,7 +30,7 @@ Build
 In a terminal:
 
 ```bash
-git clone https://github.com/facebook/luaffifb
+git clone https://github.com/Tekenlight/luaffifb
 cd luaffifb
 luarocks make
 ```
@@ -54,8 +55,6 @@ Known Issues
 - Not all metamethods work with Lua 5.1 (eg char\* + number). This is due to
   the way metamethods are looked up with mixed types in Lua 5.1. If you need
 this upgrade to Lua 5.2 or use boxed numbers (uint64\_t and uintptr\_t).
-- All bitfields are treated as unsigned (does anyone even use signed
-  bitfields?). Note that "int s:8" is unsigned on unix x86/x64, but signed on windows.
 
 How it works
 ------------
@@ -84,6 +83,21 @@ using dynasm (see call\_x86.dasc). The JITed code does the following in order:
 3. Performs the C call
 4. Retrieves `errno`
 5. Pushes the result back into lua from the HW register or stack
+
+
+Extensions in this fork
+-----------------------
+
+In addition to the original luaffifb functionality, this fork includes:
+
+- **Signed bitfield support**: C signed bitfields are supported, including
+  correct sign extension when reading bitfield values. Signed and unsigned
+  64-bit bitfields retain their 64-bit cdata representation.
+
+- **User hook bridge**: Native code embedding this library can register hooks
+  that create and interact with FFI values through the active Lua/FFI state.
+  This allows native extensions to return FFI typed values directly without
+  requiring the Lua layer to recreate them.
 
   
 Usage with other lua frameworks

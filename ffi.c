@@ -194,7 +194,7 @@ static void debug_print_type(const struct ctype* ct)
             ct->pointers,
             ct->const_mask,
             /* type */
-            ct->is_unsigned ? "u" : "",
+            ct->is_unsigned ? "unsigned" : "signed ",
             etype_tostring(ct->type),
             ct->is_reference,
             ct->is_defined,
@@ -1276,12 +1276,47 @@ static void set_value(lua_State* L, int idx, void* to, int to_usr, const struct 
 
     } else if (tt->is_bitfield) {
 
-        uint64_t hi_mask = UINT64_C(0) - (UINT64_C(1) << (tt->bit_offset + tt->bit_size));
-        uint64_t low_mask = (UINT64_C(1) << tt->bit_offset) - UINT64_C(1);
-        uint64_t val = check_uint64(L, idx);
-        val &= (UINT64_C(1) << tt->bit_size) - 1;
+        if (tt->bit_size == 0 ||
+            tt->bit_size >= 64 ||
+            tt->bit_offset >= 64 ||
+            tt->bit_offset + tt->bit_size > 64) {
+            goto err;
+        }
+ 
+        uint64_t raw_storage = check_uint64(L, idx);
+
+        uint64_t val = raw_storage;
+        uint64_t mask = (UINT64_C(1) << tt->bit_size) - 1;
+
+        val &= mask;
         val <<= tt->bit_offset;
-        *(uint64_t*) to = val | (*(uint64_t*) to & (hi_mask | low_mask));
+
+        uint64_t field_mask = mask << tt->bit_offset;
+
+        *(uint64_t*)to = (*(uint64_t*)to & ~field_mask) | val;
+
+        /*
+        if (tt->is_unsigned) {
+            uint64_t hi_mask = UINT64_C(0) - (UINT64_C(1) << (tt->bit_offset + tt->bit_size));
+            uint64_t low_mask = (UINT64_C(1) << tt->bit_offset) - UINT64_C(1);
+            uint64_t val = check_uint64(L, idx);
+            val &= (UINT64_C(1) << tt->bit_size) - 1;
+            val <<= tt->bit_offset;
+            *(uint64_t*) to = val | (*(uint64_t*) to & (hi_mask | low_mask));
+        } else {
+            uint64_t raw_storage = check_uint64(L, idx);
+
+            uint64_t val = raw_storage;
+            uint64_t mask = (UINT64_C(1) << tt->bit_size) - 1;
+
+            val &= mask;
+            val <<= tt->bit_offset;
+
+            uint64_t field_mask = mask << tt->bit_offset;
+
+            *(uint64_t*)to = (*(uint64_t*)to & ~field_mask) | val;
+        }
+        */
 
     } else if (tt->type == STRUCT_TYPE || tt->type == UNION_TYPE) {
         set_struct(L, idx, to, to_usr, tt, check_pointers);
@@ -2148,11 +2183,19 @@ err:
             memset(&rt, 0, sizeof(rt));
             rt.base_size = 8;
             rt.type = INT64_TYPE;
-            rt.is_unsigned = 1;
+            rt.is_unsigned = ct.is_unsigned;
             rt.is_defined = 1;
 
-            to = push_cdata(L, 0, &rt);
-            *(uint64_t*) to = val;
+            if (ct.is_unsigned) {
+                to = push_cdata(L, 0, &rt);
+                *(uint64_t*) to = val;
+            } else {
+                int shift_by = 64 - ct.bit_size;
+                int64_t signed_val = (int64_t)(val << shift_by) >> shift_by;
+
+                to = push_cdata(L, 0, &rt);
+                *(int64_t*) to = signed_val;
+            }
 
             return 1;
 
@@ -2164,34 +2207,39 @@ err:
         } else {
             //uint64_t val = *(uint64_t*) data; //Trial fix
             uint64_t val = 0;
-			switch (ct.type) {
-				case INT8_TYPE: {
-					uint8_t ui;
-					memcpy(&ui, data, sizeof(uint8_t));
-					val = ui;
-					//val = *(uint8_t*)data;
-					break;
-				}
-				case INT16_TYPE: {
-					uint16_t ui;
-					memcpy(&ui, data, sizeof(uint16_t));
-					val = ui;
-					//val = *(uint16_t*)data;
-					break;
-				}
-				case INT32_TYPE: {
-					uint32_t ui;
-					memcpy(&ui, data, sizeof(uint32_t));
-					val = ui;
-					//val = *(uint32_t*)data;
-					break;
-				}
-				case INT64_TYPE:
-				default:
-					return luaL_error(L, "Inavaid data type");
-			}
+            switch (ct.type) {
+                case INT8_TYPE: {
+                    uint8_t ui;
+                    memcpy(&ui, data, sizeof(uint8_t));
+                    val = ui;
+                    //val = *(uint8_t*)data;
+                    break;
+                }
+                case INT16_TYPE: {
+                    uint16_t ui;
+                    memcpy(&ui, data, sizeof(uint16_t));
+                    val = ui;
+                    //val = *(uint16_t*)data;
+                    break;
+                }
+                case INT32_TYPE: {
+                    uint32_t ui;
+                    memcpy(&ui, data, sizeof(uint32_t));
+                    val = ui;
+                    //val = *(uint32_t*)data;
+                    break;
+                }
+                case INT64_TYPE:
+                default:
+                    return luaL_error(L, "Inavaid data type");
+            }
             val >>= ct.bit_offset;
             val &= (UINT64_C(1) << ct.bit_size) - 1;
+
+            if (!ct.is_unsigned) {
+                int shift_by = 64 - ct.bit_size;
+                val = (int64_t)(val << shift_by) >> shift_by;
+            }
             lua_pushinteger(L, val);
             return 1;
         }
