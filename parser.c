@@ -2120,7 +2120,7 @@ static void parse_constant_assignemnt(lua_State* L,
     }
 
     lua_rawset(L, -3);
-    lua_pop(L, 2); /*constants and type*/
+    lua_pop(L, 1); /* constants */
 }
 
 #define END 0

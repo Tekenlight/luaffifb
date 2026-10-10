@@ -673,6 +673,14 @@ assert(ffi.sizeof('struct vls2') == 4)
 ffi.cdef [[ static const int DUMMY = 8 << 2; ]]
 assert(ffi.C.DUMMY == 32)
 
+-- a constant followed by more declarations in the same cdef call
+ffi.cdef [[
+static const int DUMMY_LEN = 4;
+struct dummy_arr { int a[DUMMY_LEN]; };
+]]
+assert(ffi.C.DUMMY_LEN == 4)
+assert(ffi.sizeof('struct dummy_arr') == 4 * ffi.sizeof('int'))
+
 ffi.new('struct {const char* foo;}', {'foo'})
 
 assert(not pcall(function()
