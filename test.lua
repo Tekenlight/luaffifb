@@ -758,8 +758,8 @@ __attribute__((dllimport)) void __attribute__((__cdecl__)) alEnable( ALenum capa
 
 check(ffi.sizeof('struct {char foo[alignof(uint64_t)];}'), ffi.alignof('uint64_t'))
 
--- Check native number type for int64_t/uint64_t function args/returns in Lua 5.3
-if _VERSION == "Lua 5.3" then
+-- Check native numbers for int64_t/uint64_t function args/returns in Lua 5.3+
+if _VERSION >= "Lua 5.3" then
     local native_7F = 0x7FFFFFFFFFFFFFFF
     local cdata_long_7F =  ffi.new("int64_t",  0x7FFFFFFFFFFFFFFF)
     local cdata_ulong_7F = ffi.new("uint64_t", 0x7FFFFFFFFFFFFFFF)
