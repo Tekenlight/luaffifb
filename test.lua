@@ -919,8 +919,13 @@ if _VERSION ~= 'Lua 5.1' then
     local v = tp(1, 2, 3)
     local x, y = pairs(v)
     assert(x == 1 and y == 2)
-    x, y = ipairs(v)
-    assert(x == 2 and y == 3)
+    -- Lua 5.4 removed __ipairs and 5.3 honors it only with
+    -- LUA_COMPAT_IPAIRS, so ask the interpreter rather than check _VERSION
+    local probe = setmetatable({}, {__ipairs = function() return true end})
+    if ipairs(probe) == true then
+        x, y = ipairs(v)
+        assert(x == 2 and y == 3)
+    end
 end
 
 -- test for pointer to struct having same metamethods
