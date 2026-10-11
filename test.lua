@@ -936,6 +936,88 @@ if _VERSION ~= 'Lua 5.1' then
     end
 end
 
+ffi.cdef [[
+struct precedence_c_member {
+    int ipairs;
+};
+
+struct precedence_user_index {
+    int a;
+};
+
+struct precedence_builtin {
+    int a;
+    int b;
+    int c;
+};
+
+struct precedence_missing {
+    int a;
+};
+]];
+
+if _VERSION ~= 'Lua 5.1' then
+    --
+    -- cdata_index precedence:
+    --
+    -- 1. A real C member must take precedence over the built-in "ipairs".
+    --
+    local c_member_type = ffi.metatype("struct precedence_c_member", {
+        __ipairs = function(tp)
+            return 100, 200
+        end
+    })
+    local v = c_member_type(42)
+    assert(v.ipairs == 42)
+
+
+    --
+    -- 2. A user-defined __index member must take precedence over the
+    --    built-in "ipairs".
+    --
+    local user_index_type = ffi.metatype("struct precedence_user_index", {
+        __index = {
+            ipairs = function(tp)
+                return tp.a, 99
+            end
+        },
+
+        __ipairs = function(tp)
+            return 100, 200
+        end
+    })
+    v = user_index_type(42)
+    local x, y = v:ipairs()
+    assert(x == 42 and y == 99)
+
+    --
+    -- 3. If neither a C member nor user __index supplies "ipairs",
+    --    the built-in cdata method must be used.  cdata_ipairs() then
+    --    dispatches to the type's __ipairs operation.
+    --
+    local builtin_type = ffi.metatype("struct precedence_builtin", {
+        __ipairs = function(tp)
+            return tp.b, tp.c
+        end
+    })
+    v = builtin_type(1, 2, 3)
+    x, y = v:ipairs()
+    assert(x == 2 and y == 3)
+
+    --
+    -- 4. The built-in fallback must apply only to "ipairs".
+    --    An unrelated missing member must continue to produce an error.
+    --
+    local missing_type = ffi.metatype("struct precedence_missing", {})
+    v = missing_type(1)
+    local ok = pcall(function()
+        return v.some_nonexistent_member
+    end)
+    assert(not ok)
+end
+
+
+
 -- test for pointer to struct having same metamethods
 local st = ffi.cdef "struct ptest {int a, b;};"
 local tp = ffi.metatype("struct ptest", {__index = function(s, k) return k end, __len = function(s) return 3 end})

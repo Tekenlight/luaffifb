@@ -34,6 +34,7 @@ int niluv_key;
 int asmname_key;
 
 static const char* etype_tostring(int type);
+static int cdata_ipairs(lua_State* L);
 
 /* lua hook ffi interface */
 #include "luaffi_capi.h"
@@ -2130,21 +2131,21 @@ static int cdata_index(lua_State* L)
     if (off < 0) {
         assert(lua_gettop(L) == 3);
         if (!push_user_mt(L, -1, &ct)) {
-            goto err;
+            goto try_builtin;
         }
 
         lua_pushliteral(L, "__index");
         lua_rawget(L, -2);
 
         if (lua_isnil(L, -1)) {
-            goto err;
+            goto try_builtin;
         }
 
         if (lua_istable(L, -1)) {
             lua_pushvalue(L, 2);
             lua_gettable(L, -2);
             if (lua_isnil(L, -1))
-                goto err;
+                goto try_builtin;
             return 1;
         }
 
@@ -2152,6 +2153,14 @@ static int cdata_index(lua_State* L)
         lua_settop(L, 3);
         lua_call(L, 2, LUA_MULTRET);
         return lua_gettop(L);
+
+try_builtin:
+        lua_settop(L, 3);       /* cdata, key, ct_usr */
+
+        if (lua_isstring(L, 2) && strcmp(lua_tostring(L, 2), "ipairs") == 0) {
+            lua_pushcfunction(L, cdata_ipairs);
+            return 1;
+        }
 
 err:
         push_type_name(L, 3, &ct);

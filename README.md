@@ -99,6 +99,32 @@ In addition to the original luaffifb functionality, this fork includes:
   This allows native extensions to return FFI typed values directly without
   requiring the Lua layer to recreate them.
 
+ipairs and Lua 5.4+
+---------------------
+
+Lua 5.4 removed support for the `__ipairs` metamethod. For cdata types that define an `__ipairs` operation using `ffi.metatype`, luaffifb provides `cdata:ipairs()` as an explicit alternative.
+
+```lua
+local point = ffi.metatype("struct point", {
+    __ipairs = function(self)
+        -- return iterator values as appropriate
+    end
+})
+
+local p = point()
+
+-- Lua versions supporting the __ipairs protocol:
+for k, v in ipairs(p) do
+    -- ...
+end
+
+-- Portable luaffifb form, including Lua 5.4 and later:
+for k, v in p:ipairs() do
+    -- ...
+end
+```
+
+The `:ipairs()` method invokes the type's existing `__ipairs` operation; existing metatype definitions therefore do not need to be changed.
   
 Usage with other lua frameworks
 -------------------------------
